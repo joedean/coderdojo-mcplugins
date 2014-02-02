@@ -1,8 +1,5 @@
-::get javaw.exe from the latest properly installed jre
-for /f tokens^=2^ delims^=^" %%i in ('reg query HKEY_CLASSES_ROOT\jarfile\shell\open\command /ve') do set JAVAW_PATH=%%i
-
-::if reg entry is not found, java is not installed
-if "%JAVAW_PATH%"=="" goto YOUR_ERROR
-
-::then strip "\javaw.exe" from the JAVAW_PATH obtained above
-set JAVA_HOME=%JAVA_HOME:\javaw.exe=%
+@echo off
+PATH %PATH%;%JAVA_HOME%\bin\
+for /f tokens^=2-5^ delims^=.-_^" %%j in ('java -fullversion 2^>^&1') do set "java_version=%%j.%%k.%%l%%m"
+echo %java_version%
+bitsadmin.exe /transfer "jruby-complete-download" https://github.com/joedean/coderdojo-mcplugins/archive/master.zip C:\DOCUME~1\Joe\master.zip
