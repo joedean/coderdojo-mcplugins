@@ -4,7 +4,7 @@ if [ "$1" != "check_env" ]; then
   exit 1
 fi
 
-SCRIPT='~/coderdojo/lib/check_environment.rb'
+SCRIPT='lib/check_environment.rb'
 ACCEPTABLE_JAVA_VERSION=6
 JAVA_VERSION=`java -version 2>&1 | head -1 | awk -F '"' '{print $2}'`
 JVM_HEAP_STACK_SETTINGS='-Xmx500m -Xss1024k'
@@ -30,11 +30,11 @@ if [ ! -d ~/coderdojo ]; then
 fi
 cd ~/coderdojo
 if [ ! -f ~/coderdojo/lib/jruby-complete.jar ]; then
-  curl -L -o coderdojo_mcplugins.zip -k https://github.com/joedean/coderdojo-mcplugins/archive/master.zip
-  unzip coderdojo_mcplugins.zip
-  mv coderdojo_mcplugins_master/* .
-  rmdir coderdojo_mcpugins_master
-  rm coderdojo_mcplugins.zip
+  curl -L -o coderdojo-mcplugins.zip -k https://github.com/joedean/coderdojo-mcplugins/archive/master.zip
+  unzip coderdojo-mcplugins.zip
+  mv coderdojo-mcplugins-master/* .
+  rmdir coderdojo-mcplugins-master
+  rm coderdojo-mcplugins.zip
 fi
 
-java ${JVM_HEAP_STACK_SETTINGS} -jar ~/.coderdojo/jruby-complete.jar ${SCRIPT}
+java ${JVM_HEAP_STACK_SETTINGS} -jar lib/jruby-complete.jar ${SCRIPT}

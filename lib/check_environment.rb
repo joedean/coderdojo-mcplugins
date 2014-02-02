@@ -79,6 +79,7 @@ class CheckEnvironment
   def generate_key
     puts "-------------------------"
     value_to_encrypt = "Version #{VERSION} - #{@name}"
+    puts value_to_encrypt
     encrypted_value = deflate(value_to_encrypt)
     puts encrypted_value
     puts "-------------------------"
