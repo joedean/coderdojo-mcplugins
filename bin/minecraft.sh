@@ -32,8 +32,8 @@ cd ~/coderdojo
 if [ ! -f ~/coderdojo/lib/jruby-complete.jar ]; then
   curl -L -o coderdojo-mcplugins.zip -k https://github.com/joedean/coderdojo-mcplugins/archive/master.zip
   unzip coderdojo-mcplugins.zip
-  mv coderdojo-mcplugins-master/* .
-  rmdir coderdojo-mcplugins-master
+  mv ~/coderdojo/coderdojo-mcplugins-master/* ~/coderdojo/
+  rmdir ~/coderdojo/coderdojo-mcplugins-master
   rm coderdojo-mcplugins.zip
 fi
 
