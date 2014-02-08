@@ -12,6 +12,8 @@ class CheckEnvironment
     check_java
     check_bukkit
     check_sublime
+    check_forge
+    check_computer_craft
     generate_key
   end
 
@@ -74,6 +76,20 @@ class CheckEnvironment
   def check_sublime
     raise "Install sublime_text and make sure it's in your PATH" unless which "sublime_text"
     success "Sublime Text"
+  end
+
+  def check_forge
+    puts "When the simple forge installer dialog comes up select 'Install client' and click 'Ok'"
+    %x[java -jar ~/coderdojo/minecraft/forge-1.6.4-9.11.1.965-installer.jar]
+    FileUtils.mkdir ".minecraft/versions/coderdojo" unless File.directory?(".minecraft/versions/coderdojo")
+    unless File.exists? ".minecraft/versions/coderdojo.jar"
+      FileUtils.cp ".minecraft/versions/1.6.4-Forge9.11.1.965/1.6.4-Forge9.11.1.965.jar", ".minecraft/versions/coderdojo/coderdojo.jar"
+      FileUtils.cp ".minecraft/versions/1.6.4-Forge9.11.1.965/1.6.4-Forge9.11.1.965.json", ".minecraft/versions/coderdojo/coderdojo.json"
+    end
+  end
+
+  def check_computer_craft
+    FileUtils.mv('coderdojo/minecraft/ComputerCraft1.58.zip' '.minecraft/mods/') unless File.exists? ".minecraft#{FILE_SEPARATOR}mods#{FILE_SEPARATOR}ComputerCraft1.58.zip"
   end
 
   def generate_key
