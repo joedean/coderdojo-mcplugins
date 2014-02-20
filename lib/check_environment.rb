@@ -5,12 +5,15 @@ require 'open-uri'
 class CheckEnvironment
   VERSION = "0.1"
   APP_ROOT = File.join File.dirname(__FILE__), '..'
+  PLATFORM = RbConfig::CONFIG["host_os"]
 
   def run
     prompt_for_user_name
-    check_java
-    check_bukkit
-    check_sublime
+    if session_requires_java_development?
+      check_java
+      check_bukkit
+      check_sublime
+    end
     check_forge
     check_computer_craft
     generate_key
@@ -46,18 +49,20 @@ class CheckEnvironment
   end
 
   def check_sublime
-    raise "Install sublime_text and make sure it's in your PATH" unless which "sublime_text"
+    path = which "sublime_text"
+    path = which "Sublime Text 2" if mac?
+    raise "Install Sublime Text 2 and make sure it's in your PATH" unless path
     success "Sublime Text"
   end
 
   def check_forge
     forge = 'forge-1.6.4-9.11.1.965'
-    minecraft_path = File.join APP_ROOT, '..', '.minecraft'
     coderdojo_path = File.join minecraft_path, 'versions', 'coderdojo'
     forge_path = File.join minecraft_path, 'versions', forge
     forge_installer = File.join APP_ROOT, 'minecraft', "#{forge}-installer.jar"
     json_path = File.join coderdojo_path, 'coderdojo.json'
 
+    put "Make sure minecraft has run at least once in 1.6.4 mode"
     puts "When the simple forge installer dialog comes up select 'Install client' and click 'Ok'"
     %x[java -jar #{forge_installer}]
     mkdir coderdojo_path unless Dir.exists? coderdojo_path
@@ -86,7 +91,7 @@ class CheckEnvironment
   end
 
   def check_computer_craft
-    mods_dir = File.join APP_ROOT, '..', '.minecraft', 'mods'
+    mods_dir = File.join minecraft_path, 'mods'
     unless File.exists? File.join(mods_dir, 'ComputerCraft1.58.zip')
       FileUtils.cp(File.join(APP_ROOT, 'minecraft', 'ComputerCraft1.58.zip'),
                    File.join(mods_dir, 'ComputerCraft1.58.zip'))
@@ -152,6 +157,28 @@ class CheckEnvironment
       }
     end
     return nil
+  end
+
+  def minecraft_path
+    File.join APP_ROOT, '..', '.minecraft' if linux?
+    File.join APP_ROOT, '..', 'Library', 'Application Support', 'minecraft' if mac?
+    File.join APP_ROOT, '..', 'Application Data', '.minecraft' if windows?
+  end
+
+  def linux?
+    PLATFORM == "linux"
+  end
+
+  def mac?
+    PLATFORM == "darwin"
+  end
+
+  def windows?
+    PLATFORM == "mswin32"
+  end
+
+  def session_requires_java_development?
+    false
   end
 end
 
