@@ -6,39 +6,50 @@ require "yaml"
 module CoderDojo
   VERSION = Java::ComCoderdojoMcplugins::Main.version
   FORGE_VERSION = Java::ComCoderdojoMcplugins::Main.forge_version
-  USER_HOME = Java::JavaLang::System.get_property "user.home"
-  HOME = File.join USER_HOME, "coderdojo"
-  SERVER = File.join HOME, "server"
-  TEMP = File.join HOME, "tmp"
 
-  class << self
-    def home_dir
-      CoderDojo::Util.mkdir CoderDojo::HOME
-    end
-
-    def minecraft_dir
-      if CoderDojo::Util.linux?
-        File.join USER_HOME, ".minecraft"
-      elsif CoderDojo::Util.mac?
-        File.join USER_HOME, "Library", "Application Support", "minecraft"
-      elsif CoderDojo::Util.windows?
-        File.join USER_HOME, "Application Data", ".minecraft"
-      else
-        CoderDojo::Util.error "Cannot determine your platform from '#{CoderDojo::Util.platform}'"
+  class Paths
+    class << self
+      def home_dir
+        CoderDojo::Util.mkdir File.join(user_home_dir, "coderdojo")
       end
-    end
 
-    def server_dir
-      CoderDojo::Util.mkdir CoderDojo::SERVER
-    end
+      def minecraft_dir
+        if CoderDojo::Util.linux?
+          File.join user_home_dir, ".minecraft"
+        elsif CoderDojo::Util.mac?
+          File.join user_home_dir, "Library", "Application Support", "minecraft"
+        elsif CoderDojo::Util.windows?
+          File.join user_home_dir, "Application Data", ".minecraft"
+        else
+          CoderDojo::Util.error "Cannot determine your platform from '#{CoderDojo::Util.platform}'"
+        end
+      end
 
-    def temp_dir
-      CoderDojo::Util.mkdir CoderDojo::TEMP
+      def server_dir
+        CoderDojo::Util.mkdir File.join(home_dir, "server")
+      end
+
+      def temp_dir
+        CoderDojo::Util.mkdir File.join(home_dir, "tmp")
+      end
+
+      def user_home_dir
+        Java::JavaLang::System.get_property "user.home"
+      end
     end
   end
 
   class Util
     class << self
+      # Download url to a specified location
+      def download(url, location)
+        File.open(location, "wb") do |saved_file|
+          open(url, "rb") do |read_file|
+            saved_file.write(read_file.read)
+          end
+        end
+      end
+
       def error(message, problem = true)
         if problem
           STDERR.puts "There is a problem with your environment:\n"
@@ -107,7 +118,7 @@ module CoderDojo
 
       private
       def path
-        File.join CoderDojo.home_dir, "config.yml"
+        File.join CoderDojo::Paths.home_dir, "config.yml"
       end
 
       def load
@@ -130,9 +141,6 @@ module CoderDojo
   end
 
   class CheckEnvironment
-    APP_ROOT = File.join File.dirname(__FILE__), '..'
-    MINIMUM_JAVA_VERSION = 6
-
     def run
       prompt_for_user_name
       check_java
@@ -164,17 +172,17 @@ module CoderDojo
     end
 
     def check_java
+      minimum_java_version = 6
       version = Java::JavaLang::System.get_property "java.version"
       major = version.split(".")[1].to_i
 
-      if major < MINIMUM_JAVA_VERSION
-        CoderDojo::Util.error "Your current version of Java is: #{version}
-  Please upgrade to Java 1.#{MINIMUM_JAVA_VERSION} or higher."
+      if major < minimum_java_version
+        CoderDojo::Util.error "Your current version of Java is: #{version}\n  Please upgrade to Java 1.#{minimum_java_version} or higher."
       end
     end
 
     def check_minecraft
-      CoderDojo::Util.error "Could not find Minecraft at:\n  #{CoderDojo.minecraft_dir}\nPlease install Minecraft." unless File.exists? CoderDojo.minecraft_dir
+      CoderDojo::Util.error "Could not find Minecraft at:\n  #{CoderDojo::Paths.minecraft_dir}\nPlease install Minecraft." unless File.exists? CoderDojo::Paths.minecraft_dir
       CoderDojo::Util.success "Minecraft"
     end
 
@@ -185,12 +193,12 @@ module CoderDojo
     end
 
     def check_bukkit
-      craftbukkit_path = File.join CoderDojo.server_dir, 'craftbukkit.jar'
+      craftbukkit_path = File.join CoderDojo::Paths.server_dir, 'craftbukkit.jar'
 
-      #TODO: check file size of craftbukkit.jar
+      # TODO: check file size of craftbukkit.jar
       unless File.exists? craftbukkit_path
         puts "Downloading craftbukkit.jar.  Please wait..."
-        download "http://dl.bukkit.org/latest-rb/craftbukkit.jar", craftbukkit_path
+        CoderDojo::Util.download "http://dl.bukkit.org/latest-rb/craftbukkit.jar", craftbukkit_path
       end
 
       CoderDojo::Util.success "Minecraft server Craftbukkit"
@@ -205,17 +213,17 @@ module CoderDojo
 
     def check_forge
       forge = "forge-#{CoderDojo::FORGE_VERSION}"
-      forge_path = File.join CoderDojo.minecraft_dir, "versions", forge
+      forge_path = File.join CoderDojo::Paths.minecraft_dir, "versions", forge
 
       unless File.exists? forge_path
-        installer_path = File.join CoderDojo.temp_dir, "forge-installer.jar"
+        installer_path = File.join CoderDojo::Paths.temp_dir, "forge-installer.jar"
         CoderDojo::Util.save_file! "forge-installer.jar", installer_path
         puts "Make sure minecraft has run at least once in 1.6.4 mode"
         puts "When the simple forge installer dialog comes up select 'Install client' and click 'Ok'"
         %x[java -jar '#{installer_path}']
       end
 
-      coderdojo_path = CoderDojo::Util.mkdir File.join(CoderDojo.minecraft_dir, "versions", "coderdojo")
+      coderdojo_path = CoderDojo::Util.mkdir File.join(CoderDojo::Paths.minecraft_dir, "versions", "coderdojo")
       forge_json = File.join forge_path, "#{forge}.json"
       forge_jar = File.join forge_path, "#{forge}.jar"
       json_path = File.join coderdojo_path, "coderdojo.json"
@@ -253,7 +261,7 @@ module CoderDojo
     end
 
     def check_computer_craft
-      mods_dir = File.join CoderDojo.minecraft_dir, "mods"
+      mods_dir = File.join CoderDojo::Paths.minecraft_dir, "mods"
       mod_path = File.join mods_dir, "ComputerCraft.zip"
 
       unless File.exists? mod_path
@@ -292,15 +300,6 @@ module CoderDojo
 
     def javac_version
       %x[javac -version 2>&1][/(?:\d+(?:\.|_)?)+/]
-    end
-
-    # Download url to a specified location
-    def download url, location
-      File.open(location, "wb") do |saved_file|
-        open(url, "rb") do |read_file|
-          saved_file.write(read_file.read)
-        end
-      end
     end
 
     def session_requires_java_development?
