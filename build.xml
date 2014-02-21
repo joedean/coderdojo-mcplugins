@@ -22,7 +22,7 @@
   </target>
 
   <target name="compile" depends="init">
-    <javac srcdir="${src}" destdir="${build}" classpathref="classpath" debug="true" />
+    <javac srcdir="${src}" destdir="${build}" classpathref="classpath" debug="true" target="1.5" source="1.5" />
 
     <copy todir="${build}/com/coderdojo/mcplugins">
       <fileset dir="${lib}" includes="**/*.rb" />
