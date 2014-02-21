@@ -3,7 +3,7 @@ require 'fileutils'
 require 'open-uri'
 
 class CheckEnvironment
-  VERSION = "0.1"
+  VERSION = Java::ComCoderdojoMcplugins::Main.version
   APP_ROOT = File.join File.dirname(__FILE__), '..'
   PLATFORM = RbConfig::CONFIG["host_os"]
 

@@ -1,6 +1,8 @@
 package com.coderdojo.mcplugins;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -10,6 +12,16 @@ import org.jruby.RubyRuntimeAdapter;
 import org.jruby.javasupport.JavaEmbedUtils;
 
 public class Main {
+    public static String getVersion() throws IOException {
+        BufferedReader input = new BufferedReader(new InputStreamReader(Main.class.getResourceAsStream("VERSION")));
+
+        try {
+            return input.readLine().trim();
+        } finally {
+            input.close();
+        }
+    }
+
     public static void main(String[] args) throws IOException {
         RubyInstanceConfig config = new RubyInstanceConfig();
         config.setArgv(args);

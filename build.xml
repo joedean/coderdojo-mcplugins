@@ -4,7 +4,7 @@
   <property name="dist" location="dist" />
   <property name="lib" location="lib" />
   <property name="jruby.jar" location="${lib}/jruby-complete.jar" />
-  <property name="version" value="0.1.0" />
+  <property name="version" value="0.1.1" />
   <property name="coderdojo-mcplugins.jar" location="${dist}/coderdojo-mcplugins-${version}.jar" />
 
   <path id="classpath">
@@ -23,6 +23,7 @@
 
   <target name="compile" depends="init">
     <javac srcdir="${src}" destdir="${build}" classpathref="classpath" debug="true" target="1.5" source="1.5" />
+    <echo file="${build}/com/coderdojo/mcplugins/VERSION" message="${version}" />
 
     <copy todir="${build}/com/coderdojo/mcplugins">
       <fileset dir="${lib}" includes="**/*.rb" />
