@@ -16,6 +16,18 @@ module CoderDojo
       CoderDojo::Util.mkdir CoderDojo::HOME
     end
 
+    def minecraft_dir
+      if CoderDojo::Util.linux?
+        File.join USER_HOME, ".minecraft"
+      elsif CoderDojo::Util.mac?
+        File.join USER_HOME, "Library", "Application Support", "minecraft"
+      elsif CoderDojo::Util.windows?
+        File.join USER_HOME, "Application Data", ".minecraft"
+      else
+        CoderDojo::Util.error "Cannot determine your platform from '#{CoderDojo::Util.platform}'"
+      end
+    end
+
     def server_dir
       CoderDojo::Util.mkdir CoderDojo::SERVER
     end
@@ -36,10 +48,22 @@ module CoderDojo
         Java::JavaLang::System.exit 1
       end
 
+      def linux?
+        platform == "linux"
+      end
+
+      def mac?
+        platform == "darwin"
+      end
+
       def mkdir(dir)
         return dir if File.exists?(dir) && File.directory?(dir)
         FileUtils.mkdir dir
         dir
+      end
+
+      def platform
+        RbConfig::CONFIG["host_os"]
       end
 
       def save_file!(resource, target)
@@ -63,12 +87,14 @@ module CoderDojo
 
         nil
       end
+
+      def windows?
+        platform == "mswin32"
+      end
     end
   end
 
   class Config
-    PATH = File.join CoderDojo.home_dir, "config.yml"
-
     class << self
       def [](key)
         load[key]
@@ -80,11 +106,15 @@ module CoderDojo
       end
 
       private
+      def path
+        File.join CoderDojo.home_dir, "config.yml"
+      end
+
       def load
         return @config if @config
 
-        if File.exists? CoderDojo::Config::PATH
-          @config = YAML.load File.read(CoderDojo::Config::PATH)
+        if File.exists? path
+          @config = YAML.load File.read(path)
         else
           @config = {}
           save!
@@ -94,14 +124,13 @@ module CoderDojo
       end
 
       def save!
-        File.write CoderDojo::Config::PATH, YAML.dump(@config)
+        File.write path, YAML.dump(@config)
       end
     end
   end
 
   class CheckEnvironment
     APP_ROOT = File.join File.dirname(__FILE__), '..'
-    PLATFORM = RbConfig::CONFIG["host_os"]
     MINIMUM_JAVA_VERSION = 6
 
     def run
@@ -145,7 +174,7 @@ module CoderDojo
     end
 
     def check_minecraft
-      CoderDojo::Util.error "Could not find Minecraft at:\n  #{minecraft_path}\nPlease install Minecraft." unless File.exists? minecraft_path
+      CoderDojo::Util.error "Could not find Minecraft at:\n  #{CoderDojo.minecraft_dir}\nPlease install Minecraft." unless File.exists? CoderDojo.minecraft_dir
       CoderDojo::Util.success "Minecraft"
     end
 
@@ -169,14 +198,14 @@ module CoderDojo
 
     def check_sublime
       path = CoderDojo::Util.which "sublime_text"
-      path = CoderDojo::Util.which "Sublime Text 2" if mac?
+      path = CoderDojo::Util.which "Sublime Text 2" if !path && CoderDojo::Util.mac?
       CoderDojo::Util.error "Install Sublime Text 2 and make sure it's in your PATH" unless path
       CoderDojo::Util.success "Sublime Text"
     end
 
     def check_forge
       forge = "forge-#{CoderDojo::FORGE_VERSION}"
-      forge_path = File.join minecraft_path, "versions", forge
+      forge_path = File.join CoderDojo.minecraft_dir, "versions", forge
 
       unless File.exists? forge_path
         installer_path = File.join CoderDojo.temp_dir, "forge-installer.jar"
@@ -186,7 +215,7 @@ module CoderDojo
         %x[java -jar '#{installer_path}']
       end
 
-      coderdojo_path = CoderDojo::Util.mkdir File.join(minecraft_path, "versions", "coderdojo")
+      coderdojo_path = CoderDojo::Util.mkdir File.join(CoderDojo.minecraft_dir, "versions", "coderdojo")
       forge_json = File.join forge_path, "#{forge}.json"
       forge_jar = File.join forge_path, "#{forge}.jar"
       json_path = File.join coderdojo_path, "coderdojo.json"
@@ -224,7 +253,7 @@ module CoderDojo
     end
 
     def check_computer_craft
-      mods_dir = File.join minecraft_path, 'mods'
+      mods_dir = File.join CoderDojo.minecraft_dir, 'mods'
       unless File.exists? File.join(mods_dir, 'ComputerCraft1.58.zip')
         FileUtils.cp(File.join(APP_ROOT, 'minecraft', 'ComputerCraft1.58.zip'),
                      File.join(mods_dir, 'ComputerCraft1.58.zip'))
@@ -269,30 +298,6 @@ module CoderDojo
           saved_file.write(read_file.read)
         end
       end
-    end
-
-    def minecraft_path
-      if linux?
-        File.join USER_HOME, ".minecraft"
-      elsif mac?
-        File.join USER_HOME, "Library", "Application Support", "minecraft"
-      elsif windows?
-        File.join USER_HOME, "Application Data", ".minecraft"
-      else
-        CoderDojo::Util.error "Cannot determine your platform from '#{PLATFORM}'"
-      end
-    end
-
-    def linux?
-      PLATFORM == "linux"
-    end
-
-    def mac?
-      PLATFORM == "darwin"
-    end
-
-    def windows?
-      PLATFORM == "mswin32"
     end
 
     def session_requires_java_development?
