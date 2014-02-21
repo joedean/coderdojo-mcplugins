@@ -4,22 +4,35 @@ require 'open-uri'
 
 class CheckEnvironment
   VERSION = Java::ComCoderdojoMcplugins::Main.version
+  USER_HOME = Java::JavaLang::System.get_property "user.home"
+  CODERDOJO_HOME = File.join USER_HOME, "coderdojo"
+  SERVER_PATH = File.join CODERDOJO_HOME, "server"
   APP_ROOT = File.join File.dirname(__FILE__), '..'
   PLATFORM = RbConfig::CONFIG["host_os"]
+  MINIMUM_JAVA_VERSION = 6
 
   def run
+    prep!
     prompt_for_user_name
+    check_java
+
     if session_requires_java_development?
-      check_java
+      check_jdk
       check_bukkit
       check_sublime
     end
+
     check_forge
     check_computer_craft
     generate_key
   end
 
   private
+  def prep!
+    mkdir CODERDOJO_HOME
+    mkdir SERVER_PATH
+  end
+
   def prompt_for_user_name
     @name = prompt_user_name "Hello! Please enter your Minecraft user name: "
     if @name.empty?
@@ -30,16 +43,24 @@ class CheckEnvironment
   end
 
   def check_java
+    version = Java::JavaLang::System.get_property "java.version"
+    major = version.split(".")[1].to_i
+
+    if major < MINIMUM_JAVA_VERSION
+      error "Your current version of Java is: #{version}
+Please upgrade to Java 1.#{MINIMUM_JAVA_VERSION} or higher."
+    end
+  end
+
+  def check_jdk
     raise "Need to install javac version #{java_version} or make sure javac is on your PATH" unless which "javac"
     raise "Your java version and javac version do not match. [java = #{java_version} and javac = #{javac_version}]" unless java_versions_match?
     success "JDK version #{javac_version}"
   end
 
   def check_bukkit
-    server_path = File.join(APP_ROOT,  'server')
-    craftbukkit_path = File.join server_path, 'craftbukkit.jar'
+    craftbukkit_path = File.join SERVER_PATH, 'craftbukkit.jar'
 
-    mkdir server_path unless Dir.exists? server_path
     #TODO: check file size of craftbukkit.jar
     unless File.exists? craftbukkit_path
       puts "Downloading craftbukkit.jar.  Please wait..."
@@ -62,7 +83,7 @@ class CheckEnvironment
     forge_installer = File.join APP_ROOT, 'minecraft', "#{forge}-installer.jar"
     json_path = File.join coderdojo_path, 'coderdojo.json'
 
-    put "Make sure minecraft has run at least once in 1.6.4 mode"
+    puts "Make sure minecraft has run at least once in 1.6.4 mode"
     puts "When the simple forge installer dialog comes up select 'Install client' and click 'Ok'"
     %x[java -jar #{forge_installer}]
     mkdir coderdojo_path unless Dir.exists? coderdojo_path
@@ -133,6 +154,11 @@ class CheckEnvironment
     puts "#{message} is installed correctly!"
   end
 
+  def error message
+    STDERR.puts "There is a problem with your environment:\n\n#{message}"
+    exit false
+  end
+
   # Download url to a specified location
   def download url, location
     File.open(location, "wb") do |saved_file|
@@ -160,9 +186,15 @@ class CheckEnvironment
   end
 
   def minecraft_path
-    File.join APP_ROOT, '..', '.minecraft' if linux?
-    File.join APP_ROOT, '..', 'Library', 'Application Support', 'minecraft' if mac?
-    File.join APP_ROOT, '..', 'Application Data', '.minecraft' if windows?
+    if linux?
+      File.join USER_HOME, ".minecraft"
+    elsif mac?
+      File.join USER_HOME, "Library", "Application Support", "minecraft"
+    elsif windows?
+      File.join USER_HOME, "Application Data", ".minecraft"
+    else
+      error "Cannot determine your platform from '#{PLATFORM}'"
+    end
   end
 
   def linux?
