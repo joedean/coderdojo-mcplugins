@@ -124,11 +124,11 @@ module CoderDojo
       verb "Installing"
 
       def done?
-        File.exists?(forge_path) && File.exists?(coderdojo_json_path) && File.exists?(coderdojo_jar_path)
+        File.exists?(forge_jar_path) && File.exists?(coderdojo_json_path) && File.exists?(coderdojo_jar_path)
       end
 
       def prepare!
-        unless File.exists? forge_path
+        unless File.exists? forge_jar_path
           installer_path = File.join CoderDojo::Paths.temp_dir, "forge-installer.jar"
           CoderDojo::Util.save_file! "forge-installer.jar", installer_path
           puts "Make sure minecraft has run at least once in 1.6.4 mode"

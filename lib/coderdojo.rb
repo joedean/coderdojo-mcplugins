@@ -241,7 +241,7 @@ module CoderDojo
         elsif CoderDojo::Util.mac?
           File.join user_home_dir, "Library", "Application Support", "minecraft"
         elsif CoderDojo::Util.windows?
-          File.join user_home_dir, "Application Data", ".minecraft"
+          File.join ENV["APPDATA"], ".minecraft"
         else
           CoderDojo::Util.error "Cannot determine your platform from '#{CoderDojo::Util.platform}'"
         end
