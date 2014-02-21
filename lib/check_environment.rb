@@ -45,6 +45,24 @@ module CoderDojo
       def save_file!(resource, target)
         Java::ComCoderdojoMcplugins::Main.save_file resource, target
       end
+
+      def success(message)
+        puts "#{message} is installed correctly!"
+      end
+
+      # Cross-platform way of finding an executable in the $PATH
+      def which(cmd)
+        exts = ENV["PATHEXT"] ? ENV["PATHEXT"].split(";") : [""]
+
+        ENV["PATH"].split(File::PATH_SEPARATOR).each do |path|
+          exts.each do |ext|
+            exe = File.join(path, "#{cmd}#{ext}")
+            return exe if File.executable? exe
+          end
+        end
+
+        nil
+      end
     end
   end
 
@@ -128,12 +146,13 @@ module CoderDojo
 
     def check_minecraft
       CoderDojo::Util.error "Could not find Minecraft at:\n  #{minecraft_path}\nPlease install Minecraft." unless File.exists? minecraft_path
+      CoderDojo::Util.success "Minecraft"
     end
 
     def check_jdk
-      raise "Need to install javac version #{java_version} or make sure javac is on your PATH" unless which "javac"
-      raise "Your java version and javac version do not match. [java = #{java_version} and javac = #{javac_version}]" unless java_versions_match?
-      success "JDK version #{javac_version}"
+      CoderDojo::Util.error "Need to install javac version #{java_version} or make sure javac is on your PATH" unless CoderDojo::Util.which "javac"
+      CoderDojo::Util.error "Your java version and javac version do not match. [java = #{java_version} and javac = #{javac_version}]" unless java_versions_match?
+      CoderDojo::Util.success "JDK version #{javac_version}"
     end
 
     def check_bukkit
@@ -144,14 +163,15 @@ module CoderDojo
         puts "Downloading craftbukkit.jar.  Please wait..."
         download "http://dl.bukkit.org/latest-rb/craftbukkit.jar", craftbukkit_path
       end
-      success "Minecraft server Craftbukkit"
+
+      CoderDojo::Util.success "Minecraft server Craftbukkit"
     end
 
     def check_sublime
-      path = which "sublime_text"
-      path = which "Sublime Text 2" if mac?
-      raise "Install Sublime Text 2 and make sure it's in your PATH" unless path
-      success "Sublime Text"
+      path = CoderDojo::Util.which "sublime_text"
+      path = CoderDojo::Util.which "Sublime Text 2" if mac?
+      CoderDojo::Util.error "Install Sublime Text 2 and make sure it's in your PATH" unless path
+      CoderDojo::Util.success "Sublime Text"
     end
 
     def check_forge
@@ -199,6 +219,8 @@ module CoderDojo
           temp_file.unlink
         end
       end
+
+      CoderDojo::Util.success "Forge"
     end
 
     def check_computer_craft
@@ -233,16 +255,11 @@ module CoderDojo
     end
 
     def java_version
-      %x[java -version 2>&1 | head -1 | awk -F '"' '{print $2}'].strip
+      %x[java -version 2>&1][/(?:\d+(?:\.|_)?)+/]
     end
 
     def javac_version
-      %x[javac -version 2>&1 | awk -F ' ' '{print $2}'].strip
-    end
-
-    # Delivers success message when environment check completes successfully
-    def success message
-      puts "#{message} is installed correctly!"
+      %x[javac -version 2>&1][/(?:\d+(?:\.|_)?)+/]
     end
 
     # Download url to a specified location
@@ -252,18 +269,6 @@ module CoderDojo
           saved_file.write(read_file.read)
         end
       end
-    end
-
-    # Cross-platform way of finding an executable in the $PATH
-    def which(cmd)
-      exts = ENV['PATHEXT'] ? ENV['PATHEXT'].split(';') : ['']
-      ENV['PATH'].split(File::PATH_SEPARATOR).each do |path|
-        exts.each { |ext|
-          exe = File.join(path, "#{cmd}#{ext}")
-          return exe if File.executable? exe
-        }
-      end
-      return nil
     end
 
     def minecraft_path
