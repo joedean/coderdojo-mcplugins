@@ -13,6 +13,104 @@ module CoderDojo
     end
   end
 
+  module Colorize
+    FOREGROUND_COLORS = {
+      :black  => "\e[30m",
+      :red    => "\e[31m",
+      :green  => "\e[32m",
+      :yellow => "\e[33m",
+      :blue   => "\e[34m",
+      :purple => "\e[35m",
+      :cyan   => "\e[36m",
+      :white  => "\e[37m"
+    }
+
+    BACKGROUND_COLORS = {
+      :black  => "\e[40m",
+      :red    => "\e[41m",
+      :green  => "\e[42m",
+      :yellow => "\e[43m",
+      :blue   => "\e[44m",
+      :purple => "\e[45m",
+      :cyan   => "\e[46m",
+      :white  => "\e[47m"
+    }
+
+    COLOR_STYLES = {
+      :bold => {
+        true  => "\e[1m",
+        false => "\e[22m"
+      },
+
+      :blink => {
+        true  => "\e[5m",
+        false => "\e[25m"
+      },
+
+      :reverse => {
+        true  => "\e[7m",
+        false => "\e[27m"
+      },
+
+      :reset => "\e[0m"
+    }
+
+    def colorize(options)
+      fg = FOREGROUND_COLORS[options[:fg]]
+      bg = BACKGROUND_COLORS[options[:bg]]
+      reset = COLOR_STYLES[:reset]
+      bold = COLOR_STYLES[:bold][!!options[:bold]] if options.include? :bold
+      blink = COLOR_STYLES[:blink][!!options[:blink]] if options.include? :blink
+      reverse = COLOR_STYLES[:reverse][!!options[:reverse]] if options.include? :reverse
+      style = "#{bold}#{blink}#{reverse}"
+      "#{fg}#{bg}#{style}#{self}#{reset}"
+    end
+
+    def black
+      colorize :fg => :black
+    end
+
+    def red
+      colorize :fg => :red
+    end
+
+    def green
+      colorize :fg => :green
+    end
+
+    def yellow
+      colorize :fg => :yellow
+    end
+
+    def blue
+      colorize :fg => :blue
+    end
+
+    def purple
+      colorize :fg => :purple
+    end
+
+    def cyan
+      colorize :fg => :cyan
+    end
+
+    def white
+      colorize :fg => :white
+    end
+
+    def bold
+      colorize :bold => true
+    end
+
+    def blink
+      colorize :blink => true
+    end
+
+    def reverse
+      colorize :reverse => true
+    end
+  end
+
   module Check
     class Error < StandardError; end
 
@@ -22,12 +120,12 @@ module CoderDojo
 
       begin
         if done?
-          puts " success"
+          puts " #{"success".green}"
           return
         end
       rescue CoderDojo::Check::Error => e
-        puts " FAILURE"
-        CoderDojo::Util.error e.message, false
+        puts " #{"FAILURE".red.bold}"
+        CoderDojo::Util.error e.message.red, false
       end
 
       begin
@@ -36,15 +134,15 @@ module CoderDojo
         @prepared = true
 
         if done?
-          puts "#{verb} #{name}: success"
+          puts "#{verb} #{name}: #{"success".green}"
           return
         else
-          puts "#{verb} #{name}: FAILURE"
-          CoderDojo::Util.error "Error while #{verb.downcase} #{name}", false
+          puts "#{verb} #{name}: #{"FAILURE".red.bold}"
+          CoderDojo::Util.error "Error while #{verb.downcase} #{name}".red, false
         end
       rescue CoderDojo::Check::Error => e
-        puts "#{verb} #{name}: FAILURE"
-        CoderDojo::Util.error e.message, false
+        puts "#{verb} #{name}: #{"FAILURE".red.bold}"
+        CoderDojo::Util.error e.message.red, false
       end
     end
 
@@ -205,10 +303,6 @@ module CoderDojo
         Java::ComCoderdojoMcplugins::Main.save_file resource, target
       end
 
-      def success(message)
-        puts "#{message} is installed correctly!"
-      end
-
       # Cross-platform way of finding an executable in the $PATH
       def which(cmd)
         exts = ENV["PATHEXT"] ? ENV["PATHEXT"].split(";") : [""]
@@ -228,4 +322,8 @@ module CoderDojo
       end
     end
   end
+end
+
+class String
+  include CoderDojo::Colorize
 end
