@@ -242,7 +242,7 @@ module CoderDojo
       puts "-------------------------"
       decoded_key = "Version #{CoderDojo.version} - #{CoderDojo::Config[:name]}"
       puts decoded_key
-      encoded_key = [decoded_key].pack "u"
+      encoded_key = BubbleBabble.md5 decoded_key
       puts encoded_key
       puts "-------------------------"
     end
