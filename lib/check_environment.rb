@@ -4,8 +4,15 @@ require "open-uri"
 require "yaml"
 
 module CoderDojo
-  VERSION = Java::ComCoderdojoMcplugins::Main.version
-  FORGE_VERSION = Java::ComCoderdojoMcplugins::Main.forge_version
+  class << self
+    def forge_version
+      Java::ComCoderdojoMcplugins::Main.forge_version
+    end
+
+    def version
+      Java::ComCoderdojoMcplugins::Main.version
+    end
+  end
 
   class Paths
     class << self
@@ -212,7 +219,7 @@ module CoderDojo
     end
 
     def check_forge
-      forge = "forge-#{CoderDojo::FORGE_VERSION}"
+      forge = "forge-#{CoderDojo.forge_version}"
       forge_path = File.join CoderDojo::Paths.minecraft_dir, "versions", forge
 
       unless File.exists? forge_path
@@ -241,7 +248,7 @@ module CoderDojo
           File.open(json_path, "r") do |file|
             file.each_line do |line|
               if /"id": ".*",/ =~ line
-                version_value = CoderDojo::FORGE_VERSION.sub "-", "-Forge"
+                version_value = CoderDojo.forge_version.sub "-", "-Forge"
                 temp_file.puts line.gsub(version_value, "coderdojo")
               else
                 temp_file.puts line
@@ -273,7 +280,7 @@ module CoderDojo
 
     def generate_key
       puts "-------------------------"
-      decoded_key = "Version #{CoderDojo::VERSION} - #{CoderDojo::Config[:name]}"
+      decoded_key = "Version #{CoderDojo.version} - #{CoderDojo::Config[:name]}"
       puts decoded_key
       encoded_key = [decoded_key].pack "u"
       puts encoded_key
