@@ -13,6 +13,89 @@ module CoderDojo
     end
   end
 
+  module Check
+    class Error < StandardError; end
+
+    def check!
+      @prepared = false
+      print "Checking #{name}..."
+
+      begin
+        if done?
+          puts " success"
+          return
+        end
+      rescue CoderDojo::Check::Error => e
+        puts " FAILURE"
+        CoderDojo::Util.error e.message, false
+      end
+
+      begin
+        puts ""
+        prepare!
+        @prepared = true
+
+        if done?
+          puts "#{verb} #{name}: success"
+          return
+        else
+          puts "#{verb} #{name}: FAILURE"
+          CoderDojo::Util.error "Error while #{verb.downcase} #{name}", false
+        end
+      rescue CoderDojo::Check::Error => e
+        puts "#{verb} #{name}: FAILURE"
+        CoderDojo::Util.error e.message, false
+      end
+    end
+
+    def prepare!
+    end
+
+    def done?
+      @prepared
+    end
+
+    def error!(message)
+      raise CoderDojo::Check::Error.new(message)
+    end
+
+    def name
+      self.class.name
+    end
+
+    def verb
+      self.class.verb
+    end
+
+    class << self
+      def included(other)
+        other.extend CoderDojo::Check::ClassMethods
+      end
+    end
+
+    module ClassMethods
+      def check!
+        new.check!
+      end
+
+      def name(value = nil)
+        if value.nil?
+          @name
+        else
+          @name = value
+        end
+      end
+
+      def verb(value = nil)
+        if value.nil?
+          @verb || "Checking"
+        else
+          @verb = value
+        end
+      end
+    end
+  end
+
   class Config
     class << self
       def [](key)
