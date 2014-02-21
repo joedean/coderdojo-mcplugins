@@ -232,7 +232,7 @@ module CoderDojo
   class Paths
     class << self
       def home_dir
-        CoderDojo::Util.mkdir File.join(user_home_dir, "coderdojo")
+        CoderDojo::Util.mkdir File.join(user_home_dir, ".coderdojo")
       end
 
       def minecraft_dir
