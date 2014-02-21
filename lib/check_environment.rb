@@ -1,19 +1,73 @@
-require 'tempfile'
-require 'fileutils'
-require 'open-uri'
+require "fileutils"
+require "tempfile"
+require "open-uri"
+require "yaml"
 
 module CoderDojo
+  VERSION = Java::ComCoderdojoMcplugins::Main.version
+  USER_HOME = Java::JavaLang::System.get_property "user.home"
+  HOME = File.join USER_HOME, "coderdojo"
+  SERVER = File.join HOME, "server"
+
+  class << self
+    def home_dir
+      CoderDojo::Util.mkdir CoderDojo::HOME
+    end
+
+    def server_dir
+      CoderDojo::Util.mkdir CoderDojo::SERVER
+    end
+  end
+
+  class Config
+    PATH = File.join CoderDojo.home_dir, "config.yml"
+
+    class << self
+      def [](key)
+        load[key]
+      end
+
+      def []=(key, value)
+        load[key] = value
+        save!
+      end
+
+      private
+      def load
+        return @config if @config
+
+        if File.exists? CoderDojo::Config::PATH
+          @config = YAML.load File.read(CoderDojo::Config::PATH)
+        else
+          @config = {}
+          save!
+        end
+
+        @config
+      end
+
+      def save!
+        File.write CoderDojo::Config::PATH, YAML.dump(@config)
+      end
+    end
+  end
+
+  class Util
+    class << self
+      def mkdir(dir)
+        return dir if File.exists?(dir) && File.directory?(dir)
+        FileUtils.mkdir dir
+        dir
+      end
+    end
+  end
+
   class CheckEnvironment
-    VERSION = Java::ComCoderdojoMcplugins::Main.version
-    USER_HOME = Java::JavaLang::System.get_property "user.home"
-    CODERDOJO_HOME = File.join USER_HOME, "coderdojo"
-    SERVER_PATH = File.join CODERDOJO_HOME, "server"
     APP_ROOT = File.join File.dirname(__FILE__), '..'
     PLATFORM = RbConfig::CONFIG["host_os"]
     MINIMUM_JAVA_VERSION = 6
 
     def run
-      prep!
       prompt_for_user_name
       check_java
 
@@ -29,11 +83,6 @@ module CoderDojo
     end
 
     private
-    def prep!
-      mkdir CODERDOJO_HOME
-      mkdir SERVER_PATH
-    end
-
     def prompt_for_user_name
       @name = prompt_user_name "Hello! Please enter your Minecraft user name: "
       if @name.empty?
@@ -60,7 +109,7 @@ module CoderDojo
     end
 
     def check_bukkit
-      craftbukkit_path = File.join SERVER_PATH, 'craftbukkit.jar'
+      craftbukkit_path = File.join CoderDojo.server_dir, 'craftbukkit.jar'
 
       #TODO: check file size of craftbukkit.jar
       unless File.exists? craftbukkit_path
@@ -87,7 +136,7 @@ module CoderDojo
       puts "Make sure minecraft has run at least once in 1.6.4 mode"
       puts "When the simple forge installer dialog comes up select 'Install client' and click 'Ok'"
       %x[java -jar #{forge_installer}]
-      mkdir coderdojo_path unless Dir.exists? coderdojo_path
+      CoderDojo::Util.mkdir coderdojo_path
       unless File.exists? File.join(coderdojo_path, 'coderdojo.json')
         FileUtils.cp File.join(forge_path, "#{forge}.jar"), File.join(coderdojo_path, 'coderdojo.jar')
         FileUtils.cp File.join(forge_path, "#{forge}.json"), json_path
@@ -122,7 +171,7 @@ module CoderDojo
 
     def generate_key
       puts "-------------------------"
-      decoded_key = "Version #{VERSION} - #{@name}"
+      decoded_key = "Version #{CoderDojo::VERSION} - #{@name}"
       puts decoded_key
       encoded_key = [decoded_key].pack "u"
       puts encoded_key
@@ -167,11 +216,6 @@ module CoderDojo
           saved_file.write(read_file.read)
         end
       end
-    end
-
-    # Helper method for making a directory on filesystem
-    def mkdir dir
-      FileUtils.mkdir dir unless File.directory? dir
     end
 
     # Cross-platform way of finding an executable in the $PATH
