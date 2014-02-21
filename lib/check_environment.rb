@@ -59,6 +59,15 @@ module CoderDojo
         FileUtils.mkdir dir
         dir
       end
+
+      def error(message, problem = true)
+        if problem
+          STDERR.puts "There is a problem with your environment:\n"
+        end
+
+        STDERR.puts message
+        exit false
+      end
     end
   end
 
@@ -84,12 +93,16 @@ module CoderDojo
 
     private
     def prompt_for_user_name
-      @name = prompt_user_name "Hello! Please enter your Minecraft user name: "
-      if @name.empty?
-        @name = prompt_user_name "Common you need to do better than that! Try entering your Minecraft user name again. "
+      return if CoderDojo::Config[:name]
+      name = prompt_user_name "Hello! Please enter your Minecraft user name: "
+
+      if name.empty?
+        name = prompt_user_name "Common you need to do better than that!\nTry entering your Minecraft user name again: "
       end
-      raise "Failed to provide a valid Minecraft user name.  Please try again!" if @name.empty?
-      puts "Please be patience while I inspect your environment..."
+
+      CoderDojo::Util.error "Failed to provide a valid Minecraft user name.\nPlease try again!" if name.empty?
+      CoderDojo::Config[:name] = name
+      puts "Please be patient while I inspect your environment..."
     end
 
     def check_java
@@ -97,7 +110,7 @@ module CoderDojo
       major = version.split(".")[1].to_i
 
       if major < MINIMUM_JAVA_VERSION
-        error "Your current version of Java is: #{version}
+        CoderDojo::Util.error "Your current version of Java is: #{version}
   Please upgrade to Java 1.#{MINIMUM_JAVA_VERSION} or higher."
       end
     end
@@ -171,7 +184,7 @@ module CoderDojo
 
     def generate_key
       puts "-------------------------"
-      decoded_key = "Version #{CoderDojo::VERSION} - #{@name}"
+      decoded_key = "Version #{CoderDojo::VERSION} - #{CoderDojo::Config[:name]}"
       puts decoded_key
       encoded_key = [decoded_key].pack "u"
       puts encoded_key
@@ -183,6 +196,7 @@ module CoderDojo
     def prompt_user_name request_msg
       print request_msg
       user_input = gets
+      CoderDojo::Util.error "Well, please try again later!", false unless user_input
       user_input.strip
     end
 
@@ -202,11 +216,6 @@ module CoderDojo
     # Delivers success message when environment check completes successfully
     def success message
       puts "#{message} is installed correctly!"
-    end
-
-    def error message
-      STDERR.puts "There is a problem with your environment:\n\n#{message}"
-      exit false
     end
 
     # Download url to a specified location
@@ -238,7 +247,7 @@ module CoderDojo
       elsif windows?
         File.join USER_HOME, "Application Data", ".minecraft"
       else
-        error "Cannot determine your platform from '#{PLATFORM}'"
+        CoderDojo::Util.error "Cannot determine your platform from '#{PLATFORM}'"
       end
     end
 
