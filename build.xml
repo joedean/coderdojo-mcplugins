@@ -1,0 +1,43 @@
+<project name="coderdojo-mcplugins" default="jar" basedir=".">
+  <property name="src" location="src" />
+  <property name="build" location="build" />
+  <property name="dist" location="dist" />
+  <property name="lib" location="lib" />
+  <property name="jruby.jar" location="${lib}/jruby-complete.jar" />
+  <property name="version" value="0.1.0" />
+  <property name="coderdojo-mcplugins.jar" location="${dist}/coderdojo-mcplugins-${version}.jar" />
+
+  <path id="classpath">
+    <pathelement location="${jruby.jar}" />
+  </path>
+
+  <target name="clean">
+    <delete dir="${build}" />
+    <delete dir="${dist}" />
+  </target>
+
+  <target name="init">
+    <mkdir dir="${build}" />
+    <mkdir dir="${dist}" />
+  </target>
+
+  <target name="compile" depends="init">
+    <javac srcdir="${src}" destdir="${build}" classpathref="classpath" debug="true" />
+
+    <copy todir="${build}/com/coderdojo/mcplugins">
+      <fileset dir="${lib}" includes="**/*.rb" />
+    </copy>
+  </target>
+
+  <target name="explode">
+    <unjar src="${jruby.jar}" dest="${build}" />
+  </target>
+
+  <target name="jar" depends="compile, explode">
+    <jar jarfile="${coderdojo-mcplugins.jar}" basedir="${build}">
+      <manifest>
+        <attribute name="Main-Class" value="com.coderdojo.mcplugins.Main" />
+      </manifest>
+    </jar>
+  </target>
+</project>
