@@ -29,6 +29,7 @@ public class Main {
         RubyRuntimeAdapter evaler = JavaEmbedUtils.newRuntimeAdapter();
 
         try {
+            evalScript("coderdojo.rb", runtime, evaler);
             evalScript("check_environment.rb", runtime, evaler);
         } finally {
             JavaEmbedUtils.terminate(runtime);
