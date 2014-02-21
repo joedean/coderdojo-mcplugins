@@ -253,11 +253,14 @@ module CoderDojo
     end
 
     def check_computer_craft
-      mods_dir = File.join CoderDojo.minecraft_dir, 'mods'
-      unless File.exists? File.join(mods_dir, 'ComputerCraft1.58.zip')
-        FileUtils.cp(File.join(APP_ROOT, 'minecraft', 'ComputerCraft1.58.zip'),
-                     File.join(mods_dir, 'ComputerCraft1.58.zip'))
+      mods_dir = File.join CoderDojo.minecraft_dir, "mods"
+      mod_path = File.join mods_dir, "ComputerCraft.zip"
+
+      unless File.exists? mod_path
+        CoderDojo::Util.save_file! "ComputerCraft.zip", mod_path
       end
+
+      CoderDojo::Util.success "Computer Craft"
     end
 
     def generate_key

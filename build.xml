@@ -9,6 +9,7 @@
   <property name="jruby.jar" location="${lib}/jruby-complete.jar" />
   <property name="resources" location="${build}/com/coderdojo/mcplugins" />
   <property name="forge-installer.jar" location="${minecraft}/forge-${forge.version}-installer.jar" />
+  <property name="computercraft.zip" location="${minecraft}/ComputerCraft1.58.zip" />
   <property name="coderdojo-mcplugins.jar" location="${dist}/coderdojo-mcplugins-${version}.jar" />
 
   <path id="classpath">
@@ -35,6 +36,7 @@
     </copy>
 
     <copy file="${forge-installer.jar}" tofile="${resources}/forge-installer.jar" />
+    <copy file="${computercraft.zip}" tofile="${resources}/ComputerCraft.zip" />
   </target>
 
   <target name="explode">
