@@ -138,8 +138,8 @@ module CoderDojo
         end
 
         CoderDojo::Util.mkdir coderdojo_path
-        error! "Could not find Forge jar.\nIs Forge installed properly?" unless File.exists? forge_jar_path
-        error! "Could not find Forge json.\nIs Forge installed properly?" unless File.exists? forge_json_path
+        error! "Could not find Forge jar at: #{forge_jar_path}\nIs Forge installed properly?" unless File.exists? forge_jar_path
+        error! "Could not find Forge json at: #{forge_json_path}\nIs Forge installed properly?" unless File.exists? forge_json_path
 
         if !File.exists?(coderdojo_json_path) || !File.exists?(coderdojo_jar_path)
           FileUtils.cp forge_json_path, coderdojo_json_path
@@ -150,8 +150,7 @@ module CoderDojo
             File.open(coderdojo_json_path, "r") do |file|
               file.each_line do |line|
                 if /"id": ".*",/ =~ line
-                  version_value = CoderDojo.forge_version.sub "-", "-Forge"
-                  temp_file.puts line.gsub(version_value, "coderdojo")
+                  temp_file.puts line.gsub(forge_version_name, "coderdojo")
                 else
                   temp_file.puts line
                 end
@@ -167,12 +166,12 @@ module CoderDojo
         end
       end
 
-      def forge
-        "forge-#{CoderDojo.forge_version}"
+      def forge_version_name
+        CoderDojo.forge_version.sub "-", "-Forge"
       end
 
       def forge_path
-        File.join CoderDojo::Paths.minecraft_dir, "versions", forge
+        File.join CoderDojo::Paths.minecraft_dir, "versions", forge_version_name
       end
 
       def coderdojo_path
@@ -180,11 +179,11 @@ module CoderDojo
       end
 
       def forge_json_path
-        File.join forge_path, "#{forge}.json"
+        File.join forge_path, "#{forge_version_name}.json"
       end
 
       def forge_jar_path
-        File.join forge_path, "#{forge}.jar"
+        File.join forge_path, "#{forge_version_name}.jar"
       end
 
       def coderdojo_json_path
@@ -205,7 +204,8 @@ module CoderDojo
         File.exists? computer_craft_path
       end
 
-      def check_computer_craft
+      def prepare!
+        CoderDojo::Util.mkdir mods_dir
         CoderDojo::Util.save_file! "ComputerCraft.zip", computer_craft_path
       end
 
