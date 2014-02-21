@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.ArrayList;
 
 import org.jruby.Ruby;
@@ -13,13 +15,11 @@ import org.jruby.javasupport.JavaEmbedUtils;
 
 public class Main {
     public static String getVersion() throws IOException {
-        BufferedReader input = new BufferedReader(new InputStreamReader(Main.class.getResourceAsStream("VERSION")));
+        return getResourceLine("VERSION");
+    }
 
-        try {
-            return input.readLine().trim();
-        } finally {
-            input.close();
-        }
+    public static String getForgeVersion() throws IOException {
+        return getResourceLine("FORGE_VERSION");
     }
 
     public static void main(String[] args) throws IOException {
@@ -35,6 +35,28 @@ public class Main {
         }
     }
 
+    public static void saveFile(String resource, String path) throws IOException {
+        File file = new File(path);
+        InputStream input = Main.class.getResourceAsStream(resource);
+
+        try {
+            FileOutputStream output = new FileOutputStream(file);
+
+            try {
+                byte[] buffer = new byte[1024];
+                int length;
+
+                while ((length = input.read(buffer)) > 0) {
+                    output.write(buffer, 0, length);
+                }
+            } finally {
+                output.close();
+            }
+        } finally {
+            input.close();
+        }
+    }
+
     private static void evalScript(String script, Ruby runtime, RubyRuntimeAdapter evaler) throws IOException {
         InputStream stream = null;
 
@@ -45,6 +67,16 @@ public class Main {
             if (stream != null) {
                 stream.close();
             }
+        }
+    }
+
+    private static String getResourceLine(String resource) throws IOException {
+        BufferedReader input = new BufferedReader(new InputStreamReader(Main.class.getResourceAsStream(resource)));
+
+        try {
+            return input.readLine().trim();
+        } finally {
+            input.close();
         }
     }
 }

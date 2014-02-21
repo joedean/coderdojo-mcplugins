@@ -3,8 +3,12 @@
   <property name="build" location="build" />
   <property name="dist" location="dist" />
   <property name="lib" location="lib" />
-  <property name="jruby.jar" location="${lib}/jruby-complete.jar" />
+  <property name="minecraft" location="minecraft" />
   <property name="version" value="0.1.1" />
+  <property name="forge.version" value="1.6.4-9.11.1.965" />
+  <property name="jruby.jar" location="${lib}/jruby-complete.jar" />
+  <property name="resources" location="${build}/com/coderdojo/mcplugins" />
+  <property name="forge-installer.jar" location="${minecraft}/forge-${forge.version}-installer.jar" />
   <property name="coderdojo-mcplugins.jar" location="${dist}/coderdojo-mcplugins-${version}.jar" />
 
   <path id="classpath">
@@ -23,11 +27,14 @@
 
   <target name="compile" depends="init">
     <javac srcdir="${src}" destdir="${build}" classpathref="classpath" debug="true" target="1.5" source="1.5" />
-    <echo file="${build}/com/coderdojo/mcplugins/VERSION" message="${version}" />
+    <echo file="${resources}/VERSION" message="${version}" />
+    <echo file="${resources}/FORGE_VERSION" message="${forge.version}" />
 
-    <copy todir="${build}/com/coderdojo/mcplugins">
+    <copy todir="${resources}">
       <fileset dir="${lib}" includes="**/*.rb" />
     </copy>
+
+    <copy file="${forge-installer.jar}" tofile="${resources}/forge-installer.jar" />
   </target>
 
   <target name="explode">

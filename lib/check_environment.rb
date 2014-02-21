@@ -5,9 +5,11 @@ require "yaml"
 
 module CoderDojo
   VERSION = Java::ComCoderdojoMcplugins::Main.version
+  FORGE_VERSION = Java::ComCoderdojoMcplugins::Main.forge_version
   USER_HOME = Java::JavaLang::System.get_property "user.home"
   HOME = File.join USER_HOME, "coderdojo"
   SERVER = File.join HOME, "server"
+  TEMP = File.join HOME, "tmp"
 
   class << self
     def home_dir
@@ -16,6 +18,33 @@ module CoderDojo
 
     def server_dir
       CoderDojo::Util.mkdir CoderDojo::SERVER
+    end
+
+    def temp_dir
+      CoderDojo::Util.mkdir CoderDojo::TEMP
+    end
+  end
+
+  class Util
+    class << self
+      def error(message, problem = true)
+        if problem
+          STDERR.puts "There is a problem with your environment:\n"
+        end
+
+        STDERR.puts message
+        Java::JavaLang::System.exit 1
+      end
+
+      def mkdir(dir)
+        return dir if File.exists?(dir) && File.directory?(dir)
+        FileUtils.mkdir dir
+        dir
+      end
+
+      def save_file!(resource, target)
+        Java::ComCoderdojoMcplugins::Main.save_file resource, target
+      end
     end
   end
 
@@ -52,25 +81,6 @@ module CoderDojo
     end
   end
 
-  class Util
-    class << self
-      def mkdir(dir)
-        return dir if File.exists?(dir) && File.directory?(dir)
-        FileUtils.mkdir dir
-        dir
-      end
-
-      def error(message, problem = true)
-        if problem
-          STDERR.puts "There is a problem with your environment:\n"
-        end
-
-        STDERR.puts message
-        exit false
-      end
-    end
-  end
-
   class CheckEnvironment
     APP_ROOT = File.join File.dirname(__FILE__), '..'
     PLATFORM = RbConfig::CONFIG["host_os"]
@@ -79,6 +89,7 @@ module CoderDojo
     def run
       prompt_for_user_name
       check_java
+      check_minecraft
 
       if session_requires_java_development?
         check_jdk
@@ -115,6 +126,10 @@ module CoderDojo
       end
     end
 
+    def check_minecraft
+      CoderDojo::Util.error "Could not find Minecraft at:\n  #{minecraft_path}\nPlease install Minecraft." unless File.exists? minecraft_path
+    end
+
     def check_jdk
       raise "Need to install javac version #{java_version} or make sure javac is on your PATH" unless which "javac"
       raise "Your java version and javac version do not match. [java = #{java_version} and javac = #{javac_version}]" unless java_versions_match?
@@ -140,37 +155,49 @@ module CoderDojo
     end
 
     def check_forge
-      forge = 'forge-1.6.4-9.11.1.965'
-      coderdojo_path = File.join minecraft_path, 'versions', 'coderdojo'
-      forge_path = File.join minecraft_path, 'versions', forge
-      forge_installer = File.join APP_ROOT, 'minecraft', "#{forge}-installer.jar"
-      json_path = File.join coderdojo_path, 'coderdojo.json'
+      forge = "forge-#{CoderDojo::FORGE_VERSION}"
+      forge_path = File.join minecraft_path, "versions", forge
 
-      puts "Make sure minecraft has run at least once in 1.6.4 mode"
-      puts "When the simple forge installer dialog comes up select 'Install client' and click 'Ok'"
-      %x[java -jar #{forge_installer}]
-      CoderDojo::Util.mkdir coderdojo_path
-      unless File.exists? File.join(coderdojo_path, 'coderdojo.json')
-        FileUtils.cp File.join(forge_path, "#{forge}.jar"), File.join(coderdojo_path, 'coderdojo.jar')
-        FileUtils.cp File.join(forge_path, "#{forge}.json"), json_path
+      unless File.exists? forge_path
+        installer_path = File.join CoderDojo.temp_dir, "forge-installer.jar"
+        CoderDojo::Util.save_file! "forge-installer.jar", installer_path
+        puts "Make sure minecraft has run at least once in 1.6.4 mode"
+        puts "When the simple forge installer dialog comes up select 'Install client' and click 'Ok'"
+        %x[java -jar '#{installer_path}']
       end
 
-      temp_file = Tempfile.new('coderdojo.json')
-      begin
-        File.open(json_path, 'r') do |file|
-          file.each_line do |line|
-            if (!!(/"id": ".*",/ =~ line))
-              temp_file.puts line.gsub(/1\.6\.4-Forge9\.11\.1\.965/, 'coderdojo')
-            else
-              temp_file.puts line
+      coderdojo_path = CoderDojo::Util.mkdir File.join(minecraft_path, "versions", "coderdojo")
+      forge_json = File.join forge_path, "#{forge}.json"
+      forge_jar = File.join forge_path, "#{forge}.jar"
+      json_path = File.join coderdojo_path, "coderdojo.json"
+      jar_path = File.join coderdojo_path, "coderdojo.jar"
+
+      CoderDojo::Util.error "Could not find Forge jar.\nIs Forge installed properly?" unless File.exists? forge_jar
+      CoderDojo::Util.error "Could not find Forge json.\nIs Forge installed properly?" unless File.exists? forge_json
+
+      if !File.exists?(json_path) || !File.exists?(jar_path)
+        FileUtils.cp forge_json, json_path
+        FileUtils.cp forge_jar, jar_path
+        temp_file = Tempfile.new("coderdojo.json")
+
+        begin
+          File.open(json_path, "r") do |file|
+            file.each_line do |line|
+              if /"id": ".*",/ =~ line
+                version_value = CoderDojo::FORGE_VERSION.sub "-", "-Forge"
+                temp_file.puts line.gsub(version_value, "coderdojo")
+              else
+                temp_file.puts line
+              end
             end
           end
+
+          temp_file.rewind
+          FileUtils.mv temp_file.path, json_path
+        ensure
+          temp_file.close
+          temp_file.unlink
         end
-        temp_file.rewind
-        FileUtils.mv(temp_file.path, json_path)
-      ensure
-        temp_file.close
-        temp_file.unlink
       end
     end
 
