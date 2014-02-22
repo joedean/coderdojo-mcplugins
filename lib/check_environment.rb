@@ -1,5 +1,4 @@
 require "fileutils"
-require "tempfile"
 
 module CoderDojo
   module Checks
@@ -142,26 +141,18 @@ module CoderDojo
         error! "Could not find Forge json at: #{forge_json_path}\nIs Forge installed properly?" unless File.exists? forge_json_path
 
         if !File.exists?(coderdojo_json_path) || !File.exists?(coderdojo_jar_path)
-          FileUtils.cp forge_json_path, coderdojo_json_path
           FileUtils.cp forge_jar_path, coderdojo_jar_path
-          temp_file = Tempfile.new("coderdojo.json")
 
-          begin
-            File.open(coderdojo_json_path, "r") do |file|
+          File.open(forge_json_path, "r") do |file|
+            File.open(coderdojo_json_path, "w") do |output_file|
               file.each_line do |line|
                 if /"id": ".*",/ =~ line
-                  temp_file.puts line.gsub(forge_version_name, "coderdojo")
+                  output_file.puts line.gsub(forge_version_name, "coderdojo")
                 else
-                  temp_file.puts line
+                  output_file.puts line
                 end
               end
             end
-
-            temp_file.rewind
-            FileUtils.mv temp_file.path, coderdojo_json_path
-          ensure
-            temp_file.close
-            temp_file.unlink
           end
         end
       end

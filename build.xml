@@ -4,9 +4,10 @@
   <property name="dist" location="dist" />
   <property name="lib" location="lib" />
   <property name="minecraft" location="minecraft" />
-  <property name="version" value="0.1.1" />
+  <property name="version" value="0.1.2" />
   <property name="forge.version" value="1.6.4-9.11.1.965" />
   <property name="jruby.jar" location="${lib}/jruby-complete.jar" />
+  <property name="jansi.jar" location="${lib}/jansi-1.11.jar" />
   <property name="resources" location="${build}/com/coderdojo/mcplugins" />
   <property name="forge-installer.jar" location="${minecraft}/forge-${forge.version}-installer.jar" />
   <property name="computercraft.zip" location="${minecraft}/ComputerCraft1.58.zip" />
@@ -14,6 +15,7 @@
 
   <path id="classpath">
     <pathelement location="${jruby.jar}" />
+    <pathelement location="${jansi.jar}" />
   </path>
 
   <target name="clean">
@@ -41,6 +43,7 @@
 
   <target name="explode">
     <unjar src="${jruby.jar}" dest="${build}" />
+    <unjar src="${jansi.jar}" dest="${build}" />
   </target>
 
   <target name="jar" depends="compile, explode">

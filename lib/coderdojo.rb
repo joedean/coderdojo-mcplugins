@@ -116,32 +116,32 @@ module CoderDojo
 
     def check!
       @prepared = false
-      print "Checking #{name}..."
+      CoderDojo::Util.print "Checking #{name}..."
 
       begin
         if done?
-          puts " #{"success".green}"
+          CoderDojo::Util.puts " #{"success".green}"
           return
         end
       rescue CoderDojo::Check::Error => e
-        puts " #{"FAILURE".red.bold}"
+        CoderDojo::Util.puts " #{"FAILURE".red.bold}"
         CoderDojo::Util.error e.message.red, false
       end
 
       begin
-        puts ""
+        CoderDojo::Util.puts ""
         prepare!
         @prepared = true
 
         if done?
-          puts "#{verb} #{name}: #{"success".green}"
+          CoderDojo::Util.puts "#{verb} #{name}: #{"success".green}"
           return
         else
-          puts "#{verb} #{name}: #{"FAILURE".red.bold}"
+          CoderDojo::Util.puts "#{verb} #{name}: #{"FAILURE".red.bold}"
           CoderDojo::Util.error "Error while #{verb.downcase} #{name}".red, false
         end
       rescue CoderDojo::Check::Error => e
-        puts "#{verb} #{name}: #{"FAILURE".red.bold}"
+        CoderDojo::Util.puts "#{verb} #{name}: #{"FAILURE".red.bold}"
         CoderDojo::Util.error e.message.red, false
       end
     end
@@ -274,10 +274,10 @@ module CoderDojo
 
       def error(message, problem = true)
         if problem
-          STDERR.puts "There is a problem with your environment:\n"
+          Java::OrgFusesourceJansi::AnsiConsole::err.println "There is a problem with your environment:\n"
         end
 
-        STDERR.puts message
+        Java::OrgFusesourceJansi::AnsiConsole::err.println message
         Java::JavaLang::System.exit 1
       end
 
@@ -297,6 +297,15 @@ module CoderDojo
 
       def platform
         RbConfig::CONFIG["host_os"]
+      end
+
+      # print and puts to support color even in windows
+      def print(msg)
+        Java::OrgFusesourceJansi::AnsiConsole::out.print msg
+      end
+
+      def puts(msg)
+        Java::OrgFusesourceJansi::AnsiConsole::out.println msg
       end
 
       def save_file!(resource, target)
