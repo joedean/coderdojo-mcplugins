@@ -4,13 +4,13 @@
   <property name="dist" location="dist" />
   <property name="lib" location="lib" />
   <property name="minecraft" location="minecraft" />
-  <property name="version" value="0.1.2" />
-  <property name="forge.version" value="1.6.4-9.11.1.965" />
+  <property name="version" value="0.1.3" />
+  <property name="forge.version" value="1.7.10-10.13.4.1517-1.7.10" />
   <property name="jruby.jar" location="${lib}/jruby-complete.jar" />
   <property name="jansi.jar" location="${lib}/jansi-1.11.jar" />
   <property name="resources" location="${build}/com/coderdojo/mcplugins" />
   <property name="forge-installer.jar" location="${minecraft}/forge-${forge.version}-installer.jar" />
-  <property name="computercraft.zip" location="${minecraft}/ComputerCraft1.58.zip" />
+  <property name="computercraft.jar" location="${minecraft}/ComputerCraft1.74.jar" />
   <property name="coderdojo-mcplugins.jar" location="${dist}/coderdojo-mcplugins-${version}.jar" />
 
   <path id="classpath">
@@ -38,7 +38,7 @@
     </copy>
 
     <copy file="${forge-installer.jar}" tofile="${resources}/forge-installer.jar" />
-    <copy file="${computercraft.zip}" tofile="${resources}/ComputerCraft.zip" />
+    <copy file="${computercraft.jar}" tofile="${resources}/ComputerCraft.jar" />
   </target>
 
   <target name="explode">
